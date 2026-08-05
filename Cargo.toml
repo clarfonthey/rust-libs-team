@@ -1,0 +1,8 @@
+[workspace]
+resolver = "2"
+members = [
+    "tools/agenda-generator",
+    "tools/ipcheck/host",
+    "tools/list-contributors",
+    "tools/unstable-api",
+]

@@ -6,7 +6,6 @@ edition = "2018"
 
 [[bin]]
 name = "cargo-list-contributors"
-path = "main.rs"
 
 [dependencies.regex]
 version = "1"

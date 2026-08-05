@@ -1,14 +1,11 @@
-#![feature(once_cell, const_in_array_repeat_expressions)]
-
 use std::{
     collections::BTreeMap,
     env,
     ffi::OsStr,
-    fmt,
+    fmt, io,
     path::{Path, PathBuf},
     process::Command,
-    io,
-    lazy::SyncLazy,
+    sync::LazyLock,
 };
 
 use regex::RegexSet;
@@ -60,12 +57,10 @@ pub fn top_contributors(
                 let map = map
                     .entry(ancestor.to_string_lossy().into_owned())
                     .or_insert_with(|| BTreeMap::new());
-    
+
                 for (author, size) in &contributors {
-                    let contributions = map
-                        .entry(author.clone())
-                        .or_insert_with(|| 0);
-    
+                    let contributions = map.entry(author.clone()).or_insert_with(|| 0);
+
                     *contributions += size;
                 }
             }
@@ -98,7 +93,7 @@ pub fn file_contributors(
                     .and_then(|stem| stem.to_str())
                     .map(|stem| !stem.contains("test") && !stem.contains("bench"))
                     .unwrap_or(false);
-                
+
                 is_src
             }
             // Include files if they're Rust source and not tests
@@ -128,7 +123,7 @@ pub fn file_contributors(
                 .expect("failed to strip path base")
                 .to_string_lossy()
                 .into_owned();
-            
+
             let log = log(repo_root, entry.path(), &since);
 
             (author, log)
@@ -141,18 +136,21 @@ pub fn file_contributors(
 }
 
 // This is just a grab-bag of filters for some changes that might be sweeping refactorings.
-static EXCLUDES: SyncLazy<RegexSet> = SyncLazy::new(|| RegexSet::new(&[
-    "(?i)rustfmt",
-    "(?i)tidy",
-    "(?i)doc",
-    "(?i)merge",
-    "(?i)split",
-    "(?i)move",
-    "(?i)refactor",
-    "(?i)mv std libs to library/",
-    "(?i)deny unsafe ops in unsafe fns",
-    "(?i)unsafe_op_in_unsafe_fn",
-]).expect("failed to compile regex set"));
+static EXCLUDES: LazyLock<RegexSet> = LazyLock::new(|| {
+    RegexSet::new(&[
+        "(?i)rustfmt",
+        "(?i)tidy",
+        "(?i)doc",
+        "(?i)merge",
+        "(?i)split",
+        "(?i)move",
+        "(?i)refactor",
+        "(?i)mv std libs to library/",
+        "(?i)deny unsafe ops in unsafe fns",
+        "(?i)unsafe_op_in_unsafe_fn",
+    ])
+    .expect("failed to compile regex set")
+});
 
 /// Run `git log` on a given file and return a map of each author with the number of commits made.
 fn log(
@@ -191,7 +189,11 @@ fn log(
             assert!(summary_parts.next().is_none(), "invalid log line");
 
             let mut diff_parts = diff.split_whitespace();
-            let additions: usize = diff_parts.next().expect("missing additions").parse().expect("failed to parse additions");
+            let additions: usize = diff_parts
+                .next()
+                .expect("missing additions")
+                .parse()
+                .expect("failed to parse additions");
 
             if author != "bors" && !EXCLUDES.is_match(summary) {
                 Some((author.to_owned(), additions))
@@ -214,7 +216,7 @@ where
     type Item = [Option<I::Item>; N];
 
     fn next(&mut self) -> Option<Self::Item> {
-        let mut chunk = [None; N];
+        let mut chunk = [const { None }; N];
 
         for i in 0..N {
             chunk[i] = self.0.next();
