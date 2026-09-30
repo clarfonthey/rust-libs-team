@@ -27,7 +27,7 @@ allow-unauthenticated = [
 zulip_stream = 327149 # #t-libs/api-changes
 topic = "libs#{number}: {title}"
 message_on_add = """\
-[libs#{number} "{title}"](https://github.com/rust-lang/libs-team/issues/{number}) has been opened. You can free to discuss on Zulip or GitHub.
+[libs#{number} "{title}"](https://github.com/rust-lang/libs-team/issues/{number}) has been opened. You are free to discuss on Zulip or GitHub.
 """
 github_comment = """\
 > [!NOTE]
